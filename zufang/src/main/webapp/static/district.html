@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>区域管理</title>
+    <link rel="stylesheet" type="text/css" href="easyUI/themes/default/easyui.css">
+    <link rel="stylesheet" type="text/css" href="easyUI/themes/icon.css">
+    <link rel="stylesheet" type="text/css" href="easyUI/css/demo.css">
+    <script src="js/jquery-1.8.3.js" language="JavaScript" type="text/javascript"></script>
+    <!--jquery.easyui.min.js包含了easyUI中的所有插件-->
+    <script src="js/jquery.easyui.min.js" language="JavaScript" type="text/javascript"></script>
+
+    <script language="JavaScript" type="text/javascript">
+
+         $(function () {
+             $("#dg").datagrid({
+                 url:'selectLimitDistrice',
+                 pagination:true,  //开启分页
+                 pageSize:3,       //初始化分页条数
+                 pageList:[5,10,15,20],  //分页显示条数
+                 toolbar:'#ToolBar',
+                 columns:[[
+                     {checkbox:true,width:100,align:'right'},
+                     {field:'id',title:'编号',width:100,align:'right'},
+                     {field:'name',title:'区域名称',width:100,align:'right'},
+                     {field:'opt',title:'操作',width:100,align:'right',
+                         formatter: function(value,row,index){
+
+                                 return "<a href='javascript:upInfo("+row.id+")'>编辑</a> &nbsp;||&nbsp; <a href='javascript:deleteInfo("+row.id+")'>删除</a> &nbsp; &nbsp; "
+                             }
+
+
+                     },
+                 ]]
+             });
+         });
+
+        function goadd() {
+            $("#AddDialog").dialog("open").dialog('setTitle',"添加区域名称");
+        }
+        function CloseDialog(dialogId) {
+            $("#"+dialogId).dialog("close");
+        }
+
+        //添加
+        function SaveDialog(){
+        $('#addDistrict').form('submit',{
+            url:"PutDistrice",
+            success:function(data){  //{"result":1}
+               var obj=$.parseJSON(data);
+
+               if(obj.result>0){
+                   $("#dg").datagrid('reload');
+                   $("#AddDialog").dialog("close");
+               }else {
+                   $.messager.alert('友情提示','添加失败，请联系管理员:13260601227!','info');
+               }
+
+            }
+        });
+        }
+
+
+    //    修改回显
+        function ModifyBySelect() {
+            var objs = $("#dg").datagrid("getSelections");
+
+
+            if(objs.length==1){
+                var id=objs[0].id;
+                $("#updateDialog").dialog("open").dialog('setTitle',"修改区域名称");
+
+
+                // $("#updateDistrict").form('load',objs[0]);
+                $.post("selectDistrice",{"id":id},function (data) {
+                    console.log(data);
+                    $("#updateDistrict").form('load',data);
+
+                },"json")
+            }else{
+                $.messager.alert('友情提示','请选择一行进行修改','info');
+            }
+
+
+
+        }
+
+        //回显
+        function upInfo(id) {
+            $("#updateDialog").dialog("open").dialog('setTitle',"修改区域名称");
+
+
+            // $("#updateDistrict").form('load',objs[0]);
+            $.post("selectDistrice",{"id":id},function (data) {
+                console.log(data);
+
+                $("#updateDistrict").form('load',data);
+            },"json")
+        }
+
+
+        //修改
+        function updateSaveDialog() {
+            $('#updateDistrict').form('submit',{
+                url:"UpdateDistrice",
+                success:function(data){  //{"result":1}
+                    var obj=$.parseJSON(data);
+
+                    if(obj.result>0){
+                        $("#dg").datagrid('reload');
+                        $("#updateDialog").dialog("close");
+                    }else {
+                        $.messager.alert('友情提示','修改失败，请联系管理员:13260601227!','info');
+                    }
+
+                }
+            });
+        }
+
+
+        function deleteInfo(id) {
+            $.messager.confirm('友情提示', '确定要删除吗?', function (r) {
+                if (r) {
+                    $.post("delDistrice", {"id": id}, function (data) {
+
+                        console.log(data)
+                        if (data.delInfo > 0) {
+                            $.messager.alert("删除成功",'删除成功');
+                            $("#dg").datagrid('reload');
+                        } else if (data.delInfo == 0) {
+                            $.messager.alert("删除失败","删除失败");
+                        }
+                    }, "json");
+                }
+            });
+
+        }
+        function DeleteByFruitName() {
+            var objs = $("#dg").datagrid("getSelections");
+            if(objs.length==0){
+                $.messager.alert("批量删除",'请选择您要删除的数据！');
+            }
+
+            if(objs.length>0){
+                $.messager.confirm('友情提示', '确定要删除吗?', function (r) {
+                    if(r){
+                        var str='';
+                    for(var i=0;i < objs.length;i++){
+                            str += objs[i].id+",";
+
+                        }
+                    str=str.substring(0,str.length-1);
+
+                    console.log(str);
+                    $.post('delDistriceAll',{"ids":str},function (data) {
+
+                        console.log(data.delInfo);
+
+
+                        if(data.delInfo>0){
+                            $.messager.alert("删除成功",'删除成功');
+                            $("#dg").datagrid('reload');
+                        } else if (data.delInfo == 0) {
+                            $.messager.alert("删除失败","删除失败");
+                        }
+
+                    },"json");
+                    }
+                });
+            }
+
+
+        }
+
+        function queryDistrict() {
+            var id= $("#id").val();
+            var name=$("#name").val();
+
+            $("#dg").datagrid("load",{
+                name:name,
+                id:id,
+            })
+        }
+
+
+    </script>
+</head>
+<body>
+
+<table id="dg"></table>
+<!—定义工具栏-->
+<div id="ToolBar">
+    <div style="height: 40px;">
+        <a href="javascript:goadd()" class="easyui-linkbutton"
+           iconCls="icon-add" plain="true">添加</a>
+        <a
+                href="javascript:ModifyBySelect()" class="easyui-linkbutton"
+                iconCls="icon-edit" plain="true">修改</a>
+        <a
+                href="javascript:DeleteByFruitName()" class="easyui-linkbutton"
+                iconCls="icon-remove" plain="true">删除</a>
+        编号：<input  type="text"  name="id"  id="id"> 地址：<input  type="text"  name="name" id="name" >
+        <input type="button" value="查找" onclick="queryDistrict()">
+    </div>
+</div>
+
+
+<!--添加窗口-->
+<div id="AddDialog" class="easyui-dialog" buttons="#AddDialogButtons"
+     style="width: 280px; height: 250px; padding: 10px 20px;" closed="true"  modal="true">
+    <form id="addDistrict"  method="post">
+        <table>
+
+            <tr>
+                <td>区域名称:</td>
+                <td><input type="text" class="easyui-validatebox" required
+                           name="name" id="bname" /></td>
+            </tr>
+        </table>
+    </form>
+
+</div>
+<!--添加窗口的按钮-->
+<div id="AddDialogButtons">
+    <a href="javascript:SaveDialog()" class="easyui-linkbutton"
+       iconCls="icon-ok">保存</a> <a href="javascript:CloseDialog('AddDialog')"
+                                   class="easyui-linkbutton" iconCls="icon-cancel">取消</a>
+</div>
+
+<!--修改窗口-->
+<div id="updateDialog" class="easyui-dialog" buttons="#updateDialogButtons"
+     style="width: 280px; height: 250px; padding: 10px 20px;" closed="true"  modal="true">
+    <form id="updateDistrict"  method="post">
+        <input type="hidden" name="id">
+        <table>
+
+            <tr>
+                <td>区域名称:</td>
+                <td><input type="text" class="easyui-validatebox" required
+                           name="name" id="dname" /></td>
+            </tr>
+        </table>
+    </form>
+
+</div>
+<!--修改窗口的按钮-->
+<div id="updateDialogButtons">
+    <a href="javascript:updateSaveDialog()" class="easyui-linkbutton"
+       iconCls="icon-ok">保存</a> <a href="javascript:CloseDialog('updateDialog')"
+                                   class="easyui-linkbutton" iconCls="icon-cancel">取消</a>
+</div>
+</body>
+</html>

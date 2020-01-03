@@ -1,0 +1,69 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:mvc="http://www.springframework.org/schema/cache"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+
+
+    <!--开启spring的注解驱动扫描包-->
+    <context:component-scan base-package="com.chen.*"></context:component-scan>
+    <!--让spring管理db.properties文件-->
+    <!--
+    classpath:表示文件的路径，表示文件在根路径时使用[
+    classpath* ： 表示文件的路径有子路径。
+    -->
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer" id="configurer">
+        <property name="location" value="classpath:db.properties"></property>
+    </bean>
+
+    <!--使用spring配置数据源，dbcp  /  c3p0-->
+    <bean class="org.apache.commons.dbcp.BasicDataSource" id="basicDataSource">
+        <property name="driverClassName" value="${driver}"></property>
+        <property name="url" value="${url}"></property>
+        <property name="username" value="${username}"></property>
+        <property name="password" value="${password}"></property>
+    </bean>
+
+    <!--现在把mybatis的创建交由spring管理 ： sqlsessionFactoryBean-->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sqlSessionFactory">
+        <!--
+                  1.需要配置数据源
+                  2.把映射文件(xml)的加载也交由spring管理
+                  3.引入mybatis的主配置文件 = sqlMapConfig.xml
+              -->
+        <!--
+            1.如果路径是文件(xml,propeties) 必须要写成 xxx/xxx/xx/xx/
+            2.如果路径是java文件，必须要写 xxx.xxx.xxx
+        -->
+        <property name="dataSource" ref="basicDataSource"></property>
+        <property name="mapperLocations" value="classpath*:com/chen/mapper/*.xml"></property>
+        <property name="configLocation" value="classpath:sqlMapConfig.xml"></property>
+    </bean>
+
+    <!--配置事务管理-->
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transactionManager">
+        <property name="dataSource" ref="basicDataSource"></property>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"></tx:annotation-driven>
+
+    <!--
+        BooksMapper.java
+        BooksMapper.xml
+    -->
+    <!--加载mapper的接口文件-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" id="mapperScannerConfigurer">
+        <property name="basePackage" value="com.chen.mapper"></property>
+    </bean>
+
+
+
+</beans>
